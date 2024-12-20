@@ -1,0 +1,76 @@
+﻿@model List<WholesaleBase.ViewModels.OrderViewModel>
+
+@{
+    ViewData["Title"] = "Orders With Contents";
+}
+
+<h1>Orders With Contents</h1>
+<p>
+    <a asp-action="CreateWithContents">Create New</a>
+</p>
+<form asp-action="ViewOrdersWithContentsByDate">
+    <div class="form-row">
+        <div class="form-group col-md-5">
+            <label for="startDate">Start Date</label>
+            <input type="date" class="form-control" id="startDate" name="startDate" value="@ViewBag.StartDat" />
+        </div>
+        <div class="form-group col-md-5">
+            <label for="endDate">End Date</label>
+            <input type="date" class="form-control" id="endDate" name="endDate" value="@ViewBag.EndDat" />
+        </div>
+        <div class="form-group col-md-2 align-self-end">
+            <button type="submit" class="btn btn-primary">Filter</button>
+        </div>
+    </div>
+</form>
+@foreach (var orderViewModel in Model)
+{
+    <div class="card mb-3">
+        <div class="card-header">
+            <h3>Order #@orderViewModel.Order.Number</h3>
+        </div>
+        <div>
+            <a asp-action="ChangeStatus" asp-route-id="@orderViewModel.Order.Number" class="btn btn-sm btn-warning">Change Status</a>
+            <a asp-action="Edit" asp-route-id="@orderViewModel.Order.Number">Edit</a> |
+            <a asp-action="Details" asp-route-id="@orderViewModel.Order.Number">Details</a> |
+            <a asp-action="Delete" asp-route-id="@orderViewModel.Order.Number">Delete</a>
+        </div>
+        <div class="card-body">
+            <p><strong>Customer ID:</strong> @orderViewModel.Order.Customer_id</p>
+            <p><strong>Date:</strong> @orderViewModel.Order.Date.ToShortDateString()</p>
+            <p><strong>Status:</strong> @orderViewModel.Order.CurrentStatus</p>
+            <p><strong>Total Cost:</strong> @orderViewModel.TotalCost.ToString("C")</p>
+        </div>
+        <div class="card-body">
+            <h5>Order Contents</h5>
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>Product Name</th>
+                        <th>Amount</th>
+                        <th>Price Per Unit</th>
+                        <th>Total Price</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var content in orderViewModel.OrderContents)
+                    {
+                        <tr>
+                            <td>@content.ProductName</td>
+                            <td>@content.Amount</td>
+                            <td>@content.ProductPrice.ToString("C")</td>
+                            <td>@content.TotalPrice.ToString("C")</td>
+                            <td>
+                                <a asp-action="Edit" asp-controller="OrderContents" asp-route-id="@content.Id" class="btn btn-sm btn-primary">Edit</a>
+                                <a asp-action="Details" asp-controller="OrderContents" asp-route-id="@content.Id" class="btn btn-sm btn-info">Details</a>
+                                <a asp-action="Delete" asp-controller="OrderContents" asp-route-id="@content.Id" class="btn btn-sm btn-danger"
+                                   onclick="return confirm('Are you sure you want to delete this item?');">Delete</a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}

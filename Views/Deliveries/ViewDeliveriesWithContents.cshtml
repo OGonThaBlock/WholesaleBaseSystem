@@ -1,0 +1,61 @@
+﻿@model List<WholesaleBase.ViewModels.DeliveryViewModel>
+
+@{
+    ViewData["Title"] = "Deliveries With Contents";
+}
+
+<h1>Deliveries With Contents</h1>
+<p>
+    <a asp-action="CreateWithContents">Create New</a>
+</p>
+@foreach (var deliveryViewModel in Model)
+{
+    
+    <div class="card mb-3">
+        <div class="card-header">
+            <h3>Delivery #@deliveryViewModel.Delivery.Number</h3>
+        </div>
+        <div>
+            <a asp-action="ChangeStatus" asp-route-id="@deliveryViewModel.Delivery.Number" class="btn btn-sm btn-warning">Change Status</a>
+            <a asp-action="Edit" asp-route-id="@deliveryViewModel.Delivery.Number">Edit</a> |
+            <a asp-action="Details" asp-route-id="@deliveryViewModel.Delivery.Number">Details</a> |
+            <a asp-action="Delete" asp-route-id="@deliveryViewModel.Delivery.Number">Delete</a>
+        </div>
+        <div class="card-body">
+            <p><strong>Supplier ID:</strong> @deliveryViewModel.Delivery.Supplier_id</p>
+            <p><strong>Date:</strong> @deliveryViewModel.Delivery.Date.ToShortDateString()</p>
+            <p><strong>Status:</strong> @deliveryViewModel.Delivery.CurrentStatus</p>
+            <p><strong>Total Cost:</strong> @deliveryViewModel.TotalCost.ToString("C")</p>
+        </div>
+        <div class="card-body">
+            <h5>Delivery Contents</h5>
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>Product Name</th>
+                        <th>Amount</th>
+                        <th>Price Per Unit</th>
+                        <th>Total Price</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var content in deliveryViewModel.DeliveryContents2)
+                    {
+                        <tr>
+                            <td>@content.ProductName</td>
+                            <td>@content.Amount</td>
+                            <td>@content.ProductPrice.ToString("C")</td>
+                            <td>@content.TotalPrice.ToString("C")</td>
+                            <td>
+                                <a asp-action="Edit" asp-controller="DeliveryContents" asp-route-id="@content.Id" class="btn btn-sm btn-primary">Edit</a>
+                                <a asp-action="Details" asp-controller="DeliveryContents" asp-route-id="@content.Id" class="btn btn-sm btn-info">Details</a>
+                                <a asp-action="Delete" asp-controller="DeliveryContents" asp-route-id="@content.Id" class="btn btn-sm btn-danger"
+                                   onclick="return confirm('Are you sure you want to delete this item?');">Delete</a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}

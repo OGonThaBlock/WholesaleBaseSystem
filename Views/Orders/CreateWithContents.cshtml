@@ -1,0 +1,91 @@
+﻿@model WholesaleBase.ViewModels.OrderWithContentsViewModel
+
+@{
+    ViewData["Title"] = "Create Order with Contents";
+}
+
+<h1>Create Order with Contents</h1>
+<div>
+    <a asp-action="ViewOrdersWithContents">Back to List</a>
+</div>
+<form asp-action="CreateWithContents" method="post">
+    <div class="form-group">
+        <label asp-for="Customer_id" class="control-label"></label>
+        <select asp-for="Customer_id" class="form-control" asp-items='new SelectList(ViewBag.Customers, "Customer_id", "Name")'></select>
+        <span asp-validation-for="Customer_id" class="text-danger"></span>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="CurrentStatus" class="control-label"></label>
+        <input asp-for="CurrentStatus" class="form-control" value="Ожидает" readonly />
+        <span asp-validation-for="CurrentStatus" class="text-danger"></span>
+    </div>
+
+    <h4>Order Contents</h4>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Product</th>
+                <th>Amount</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody id="orderContentsTable">
+            @for (int i = 0; i < Model.OrderContents.Count; i++)
+            {
+                <tr>
+                    <td>
+                        <select asp-for="@Model.OrderContents[i].Product_id" class="form-control"
+                                asp-items='new SelectList(ViewBag.Products, "Product_id", "Name")'>
+                            <option value="">-- Select Product --</option>
+                        </select>
+                    </td>
+                    <td>
+                        <input asp-for="@Model.OrderContents[i].Amount" class="form-control" />
+                    </td>
+                    <td>
+                        <button type="button" class="btn btn-danger" onclick="removeRow(this)">Remove</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+    <button type="button" class="btn btn-success" onclick="addRow()">Add Product</button>
+
+    <div class="form-group mt-3">
+        <input type="submit" value="Create" class="btn btn-primary" />
+    </div>
+</form>
+
+@section Scripts {
+    <script>
+        function addRow() {
+            const table = document.getElementById('orderContentsTable');
+            const rowCount = table.rows.length;
+            const row = table.insertRow(rowCount);
+
+            row.innerHTML = `
+                <td>
+                    <select name="OrderContents[${rowCount}].Product_id" class="form-control">
+                        <option value="">-- Select Product --</option>
+        @foreach (var product in ViewBag.Products)
+        {
+                                <option value="@product.Product_id">@product.Name</option>
+        }
+                    </select>
+                </td>
+                <td>
+                    <input name="OrderContents[${rowCount}].Amount" class="form-control" />
+                </td>
+                <td>
+                    <button type="button" class="btn btn-danger" onclick="removeRow(this)">Remove</button>
+                </td>
+            `;
+        }
+
+        function removeRow(button) {
+            const row = button.parentNode.parentNode;
+            row.parentNode.removeChild(row);
+        }
+    </script>
+}
