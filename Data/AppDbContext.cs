@@ -18,7 +18,10 @@ public class AppDbContext : IdentityDbContext<IdentityUser>
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
-
+        // Устанавливаем точность и масштаб для поля TotalCost
+        modelBuilder.Entity<Order>()
+            .Property(o => o.TotalCost)
+            .HasColumnType("decimal(18, 2)");
     }
 
   

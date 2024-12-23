@@ -12,7 +12,5 @@ namespace WholesaleBase.Models
         public string PhoneNumber { get; set; }
         
         public float PromoCode { get; set; }
-        // Дата, с которой началась текущая скидка
-        public DateTime PromoCodeDate { get; set; } = DateTime.MinValue;
     }
 }

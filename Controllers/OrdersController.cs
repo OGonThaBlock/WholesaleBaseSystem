@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
@@ -54,6 +55,7 @@ namespace WholesaleBase.Controllers
         }
 
         // GET: Orders/Create
+        [Authorize(Roles = "Admin,User")]
         public IActionResult Create()
         {
             return View();
@@ -76,6 +78,7 @@ namespace WholesaleBase.Controllers
         }
 
         // GET: Orders/Edit/5
+        [Authorize(Roles = "Admin,User")]
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null)
@@ -127,6 +130,7 @@ namespace WholesaleBase.Controllers
         }
 
         // GET: Orders/Delete/5
+        [Authorize(Roles = "Admin,User")]
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null)
@@ -150,13 +154,36 @@ namespace WholesaleBase.Controllers
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
             var order = await _context.Orders.FindAsync(id);
-            if (order != null)
+            if (order == null)
             {
-                _context.Orders.Remove(order);
+                return NotFound();
             }
 
-            await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
+            try
+            {
+                // Получить все связанные строки OrderContent
+                var orderContents = await _context.OrderContents
+                                                   .Where(oc => oc.OrderNumber == id)
+                                                   .ToListAsync();
+
+                foreach (var content in orderContents)
+                {
+                    _context.OrderContents.Remove(content); // Удаляем все связанные OrderContents
+                }
+
+                _context.Orders.Remove(order); // Удаляем сам заказ
+
+                // Сохраняем изменения
+                await _context.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                // Логирование ошибки или вывод пользователю сообщения
+                ModelState.AddModelError(string.Empty, $"Ошибка при удалении записи: {ex.Message}");
+                return RedirectToAction(nameof(ViewOrdersWithContents));
+            }
+
+            return RedirectToAction(nameof(ViewOrdersWithContents)); // Перенаправляем на страницу с заказами
         }
 
         //Представление ОБЩЕЕ
@@ -189,35 +216,18 @@ namespace WholesaleBase.Controllers
                             Id = content.Id,
                             Product_id = content.Product_id,
                             ProductName = product.Name,
-                            Amount = content.Amount,
-                            ProductPrice = product.Price
+                            Amount = content.Amount
                         });
                     }
                 }
-
-                var customer = await _context.Customers.FirstOrDefaultAsync(c => c.Customer_id == order.Customer_id);
-                var promoCode = customer?.PromoCode ?? 1.0f; // Если клиента нет, промокод по умолчанию = 1
-                var promoCodeDate = customer?.PromoCodeDate ?? DateTime.MinValue;
-
-
-                // Рассчитываем общую стоимость заказа
-                var totalCost = orderContentViewModelPrice.Sum(oc => oc.TotalPrice);
-
-                //Скидка доработать
-                decimal totalCostWithDiscount = 0;
-                if (order.Date >= promoCodeDate && promoCodeDate != DateTime.MinValue)
-                {
-                    totalCostWithDiscount = Decimal.Round((decimal)((float)totalCost * promoCode), 2);
-                }
+                
                 
 
                 // Добавляем модель заказа в список
                 orderViewModels.Add(new OrderViewModel
                 {
                     Order = order,
-                    OrderContents = orderContentViewModelPrice,
-                    TotalCost = totalCost,
-                    TotalCostWithDiscount = totalCostWithDiscount
+                    OrderContents = orderContentViewModelPrice
                 });
             }
 
@@ -226,6 +236,7 @@ namespace WholesaleBase.Controllers
 
 
         // GET: Orders/ChangeStatus/5
+        [Authorize(Roles = "Admin,User")]
         public async Task<IActionResult> ChangeStatus(int? id)
         {
             if (id == null)
@@ -328,6 +339,7 @@ namespace WholesaleBase.Controllers
 
         //создаём новый заказ с содержанием
         // GET: Orders/CreateWithContents
+        [Authorize(Roles = "Admin,User")]
         public IActionResult CreateWithContents()
         {
             ViewBag.Products = _context.Products
@@ -359,6 +371,7 @@ namespace WholesaleBase.Controllers
                 return View(viewModel);
             }
 
+
             // Создание записи в Order
             var order = new Order
             {
@@ -383,6 +396,13 @@ namespace WholesaleBase.Controllers
             }
 
             await _context.SaveChangesAsync();
+
+
+            // Рассчитываем и обновляем TotalCost для заказа
+            order.TotalCost = CalculateTotalCost(viewModel.OrderContents, order.Customer_id);
+            // Сохраняем обновленную информацию о заказе
+            await _context.SaveChangesAsync();
+
 
             // Обновляем PromoCodes для клиентов
             await UpdatePromoCodes();
@@ -415,17 +435,14 @@ namespace WholesaleBase.Controllers
                 if (totalSpent > 20000)
                 {
                     customer.PromoCode = 0.90f;
-                    customer.PromoCodeDate = DateTime.Now;
                 }
                 else if (totalSpent > 10000)
                 {
                     customer.PromoCode = 0.95f;
-                    customer.PromoCodeDate = DateTime.Now;
                 }
                 else
                 {
                     customer.PromoCode = 1f;
-                    customer.PromoCodeDate = DateTime.MinValue;
                 }
 
                 // Обновляем запись в базе данных
@@ -480,36 +497,54 @@ namespace WholesaleBase.Controllers
                             Id = content.Id,
                             Product_id = content.Product_id,
                             ProductName = product.Name,
-                            Amount = content.Amount,
-                            ProductPrice = product.Price
+                            Amount = content.Amount
                         });
                     }
                 }
 
-                var customer = await _context.Customers.FirstOrDefaultAsync(c => c.Customer_id == order.Customer_id);
-                var promoCode = customer?.PromoCode ?? 1.0f;
-                var promoCodeDate = customer?.PromoCodeDate ?? DateTime.MinValue;
-
-                var totalCost = orderContentViewModelPrice.Sum(oc => oc.TotalPrice);
-
-                decimal totalCostWithDiscount = 0;
-                if (order.Date >= promoCodeDate && promoCodeDate != DateTime.MinValue)
-                {
-                    totalCostWithDiscount = Decimal.Round((decimal)((float)totalCost * promoCode), 2);
-                }
 
                 orderViewModels.Add(new OrderViewModel
                 {
                     Order = order,
-                    OrderContents = orderContentViewModelPrice,
-                    TotalCost = totalCost,
-                    TotalCostWithDiscount = totalCostWithDiscount
+                    OrderContents = orderContentViewModelPrice
                 });
             }
 
             return View("ViewOrdersWithContents", orderViewModels);
         }
 
+
+        //метод для расчёта totalCost
+        public decimal CalculateTotalCost(List<OrderContentViewModel> orderContents, int customerId)
+        {
+            // Получаем клиента по ID
+            var customer = _context.Customers.FirstOrDefault(c => c.Customer_id == customerId);
+            if (customer == null)
+            {
+                throw new Exception("Customer not found.");
+            }
+
+            // Получаем промокод клиента
+            var promoCode = customer?.PromoCode ?? 1.0f; // Если промокод не задан, ставим 1 (без скидки)
+
+            decimal totalCost = 0m;
+
+            foreach (var content in orderContents)
+            {
+                var product = _context.Products.FirstOrDefault(p => p.Product_id == content.Product_id);
+                if (product != null)
+                {
+                    // Добавляем стоимость этого продукта в общую стоимость
+                    totalCost += product.Price * content.Amount;
+                }
+            }
+
+            // Применяем скидку с промокодом
+            decimal totalCostWithDiscount = (decimal)((float)totalCost * promoCode);
+
+            // Возвращаем итоговую стоимость с учетом скидки
+            return totalCostWithDiscount;
+        }
 
 
         private bool OrderExists(int id)

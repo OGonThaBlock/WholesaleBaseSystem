@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
@@ -55,6 +56,7 @@ namespace WholesaleBase.Controllers
         }
 
         // GET: Deliveries/Create
+        [Authorize(Roles = "Admin,User")]
         public IActionResult Create()
         {
             return View();
@@ -96,6 +98,7 @@ namespace WholesaleBase.Controllers
         }
 
         // GET: Deliveries/Edit/5
+        [Authorize(Roles = "Admin,User")]
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null)
@@ -150,6 +153,7 @@ namespace WholesaleBase.Controllers
         }
 
         // GET: Deliveries/Delete/5
+        [Authorize(Roles = "Admin,User")]
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null)
@@ -186,32 +190,13 @@ namespace WholesaleBase.Controllers
                                                      .Where(dc => dc.DeliveryNumber == id)
                                                      .ToListAsync();
 
-                int marker = 0;
                 foreach (var content in deliveryContents)
                 {
-                    // Находим соответствующий продукт
-                    var product = await _context.Products.FirstOrDefaultAsync(p => p.Product_id == content.Product_id);
-                    if (product != null)
-                    {
-                        // Уменьшаем количество продукта на складе
-                        if (product.Amount > content.Amount)
-                        {
-                            product.Amount -= content.Amount;
-                            _context.DeliveryContents.Remove(content);
-                        }
-                        else
-                        {
-                            marker = 1;
-                        }
-                    }
-                }
-                if (marker == 0)
-                {
-                    // Удаляем саму запись Delivery
-                    _context.Deliveries.Remove(delivery);
+                    _context.DeliveryContents.Remove(content);
                 }
                 
-
+                _context.Deliveries.Remove(delivery);
+                
                 // Сохраняем изменения
                 await _context.SaveChangesAsync();
             }
@@ -227,6 +212,7 @@ namespace WholesaleBase.Controllers
 
 
         // GET: Delivery/ChangeStatus/5
+        [Authorize(Roles = "Admin,User")]
         public async Task<IActionResult> ChangeStatus(int? id)
         {
             if (id == null)
@@ -315,10 +301,14 @@ namespace WholesaleBase.Controllers
 
         //СОВМЕСТНОЕ ПРЕДСТАВЛЕНИЕ ДЛЯ СОЗДАНИЯ
         // GET: Deliveries/CreateWithContents
+        [Authorize(Roles = "Admin,User")]
         public IActionResult CreateWithContents()
         {
             ViewBag.Products = _context.Products
                 .Select(p => new { p.Product_id, p.Name })
+                .ToList();
+            ViewBag.Suppliers = _context.Suppliers
+                .Select(c => new { c.Supplier_id, c.Name })
                 .ToList();
             return View(new DeliveryWithContentsViewModel());
         }
@@ -333,6 +323,10 @@ namespace WholesaleBase.Controllers
                 ViewBag.Products = _context.Products
                     .Select(p => new { p.Product_id, p.Name })
                     .ToList();
+                ViewBag.Suppliers = _context.Suppliers
+                    .Select(c => new { c.Supplier_id, c.Name })
+                    .ToList();
+
                 return View(viewModel);
             }
 
@@ -395,25 +389,80 @@ namespace WholesaleBase.Controllers
                             Id = content.Id,
                             Product_id = content.Product_id,
                             ProductName = product.Name,
-                            Amount = content.Amount,
-                            ProductPrice = product.Price
+                            Amount = content.Amount
                         });
                     }
                 }
-
-                // Рассчитываем общую стоимость доставки
-                var totalCost = deliveryContentViewModelPrice.Sum(dc => dc.TotalPrice);
 
                 // Добавляем модель доставки в список
                 deliveryViewModels.Add(new DeliveryViewModel
                 {
                     Delivery = delivery,
-                    DeliveryContents2 = deliveryContentViewModelPrice,
-                    TotalCost = totalCost
+                    DeliveryContents2 = deliveryContentViewModelPrice
                 });
             }
 
             return View(deliveryViewModels);
+        }
+
+        public async Task<IActionResult> ViewDeliveriesWithContentsByDate(DateTime? startDate, DateTime? endDate)
+        {
+            // Передача значений в ViewBag для использования в представлении
+            ViewBag.StartDate = startDate?.ToString("yyyy-MM-dd") ?? string.Empty;
+            ViewBag.EndDate = endDate?.ToString("yyyy-MM-dd") ?? string.Empty;
+
+            // Логика фильтрации по датам
+            var deliveriesQuery = _context.Deliveries.AsQueryable();
+
+            if (startDate.HasValue)
+            {
+                deliveriesQuery = deliveriesQuery.Where(d => d.Date >= startDate.Value);
+            }
+
+            if (endDate.HasValue)
+            {
+                deliveriesQuery = deliveriesQuery.Where(d => d.Date <= endDate.Value);
+            }
+
+            var deliveries = await deliveriesQuery.ToListAsync();
+
+            // Создаем список моделей
+            var deliveryViewModels = new List<DeliveryViewModel>();
+
+            foreach (var delivery in deliveries)
+            {
+                // Получаем записи DeliveryContent для текущей доставки
+                var deliveryContents = await _context.DeliveryContents
+                    .Where(dc => dc.DeliveryNumber == delivery.Number)
+                    .ToListAsync();
+
+                var deliveryContentViewModelPrice = new List<DeliveryContentViewModelPrice>();
+
+                foreach (var content in deliveryContents)
+                {
+                    var product = await _context.Products.FirstOrDefaultAsync(p => p.Product_id == content.Product_id);
+
+                    if (product != null)
+                    {
+                        deliveryContentViewModelPrice.Add(new DeliveryContentViewModelPrice
+                        {
+                            Id = content.Id,
+                            Product_id = content.Product_id,
+                            ProductName = product.Name,
+                            Amount = content.Amount
+                        });
+                    }
+                }
+
+                // Добавляем модель доставки в список
+                deliveryViewModels.Add(new DeliveryViewModel
+                {
+                    Delivery = delivery,
+                    DeliveryContents2 = deliveryContentViewModelPrice
+                });
+            }
+
+            return View("ViewDeliveriesWithContents", deliveryViewModels);
         }
 
         private bool DeliveryExists(int id)

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
@@ -43,6 +44,7 @@ namespace WholesaleBase.Controllers
         }
 
         // GET: OrderContents/Create
+        [Authorize(Roles = "Admin,User")]
         public IActionResult Create()
         {
             return View();
@@ -65,6 +67,7 @@ namespace WholesaleBase.Controllers
         }
 
         // GET: OrderContents/Edit/5
+        [Authorize(Roles = "Admin,User")]
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null)
@@ -110,12 +113,13 @@ namespace WholesaleBase.Controllers
                         throw;
                     }
                 }
-                return RedirectToAction(nameof(Index));
+                return RedirectToAction("ViewOrdersWithContents", "Orders");
             }
             return View(orderContent);
         }
 
         // GET: OrderContents/Delete/5
+        [Authorize(Roles = "Admin,User")]
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null)
@@ -145,7 +149,7 @@ namespace WholesaleBase.Controllers
             }
 
             await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
+            return RedirectToAction("ViewOrdersWithContents", "Orders");
         }
 
         private bool OrderContentExists(int id)

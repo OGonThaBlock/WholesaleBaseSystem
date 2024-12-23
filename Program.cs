@@ -96,6 +96,7 @@ async Task SeedRolesAndUsers(IServiceProvider serviceProvider)
             await userManager.AddToRoleAsync(user, "User");
         }
     }
+
 }
 
 // Вызов метода при запуске приложения

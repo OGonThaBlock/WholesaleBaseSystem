@@ -11,7 +11,6 @@ using WholesaleBase.Models;
 
 namespace WholesaleBase.Controllers
 {
-    [Authorize(Roles = "Admin")]
     public class CustomersController : Controller
     {
         private readonly AppDbContext _context;
@@ -22,12 +21,14 @@ namespace WholesaleBase.Controllers
         }
 
         // GET: Customers
+        [Authorize(Roles = "Admin,User,Manager")]
         public async Task<IActionResult> Index()
         {
             return View(await _context.Customers.ToListAsync());
         }
 
         // GET: Customers/Details/5
+        [Authorize(Roles = "Admin,User,Manager")]
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null)
@@ -45,7 +46,9 @@ namespace WholesaleBase.Controllers
             return View(customer);
         }
 
+
         // GET: Customers/Create
+        [Authorize(Roles = "Admin,User,Manager")]
         public IActionResult Create()
         {
             return View();
@@ -68,6 +71,7 @@ namespace WholesaleBase.Controllers
         }
 
         // GET: Customers/Edit/5
+        [Authorize(Roles = "Admin,User,Manager")]
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null)
@@ -119,6 +123,7 @@ namespace WholesaleBase.Controllers
         }
 
         // GET: Customers/Delete/5
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null)

@@ -6,8 +6,7 @@ namespace WholesaleBase.ViewModels
     {
         public Order Order { get; set; }
         public List<OrderContentViewModelPrice> OrderContents { get; set; }
-        public decimal TotalCost { get; set; }
-        public decimal TotalCostWithDiscount { get; set; } // Вычисляется на основе PromoCode
+        public decimal TotalCost => Order.TotalCost;  // Новое поле TotalCost
     }
 
     public class OrderContentViewModelPrice
@@ -16,7 +15,5 @@ namespace WholesaleBase.ViewModels
         public int Product_id { get; set; }
         public string ProductName { get; set; }
         public int Amount { get; set; }
-        public decimal ProductPrice { get; set; }
-        public decimal TotalPrice => Amount * ProductPrice;
     }
 }

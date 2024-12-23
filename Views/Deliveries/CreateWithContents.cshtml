@@ -11,7 +11,7 @@
 <form asp-action="CreateWithContents" method="post">
     <div class="form-group">
         <label asp-for="Supplier_id" class="control-label"></label>
-        <input asp-for="Supplier_id" class="form-control" />
+        <select asp-for="Supplier_id" class="form-control" asp-items='new SelectList(ViewBag.Suppliers, "Supplier_id", "Name")'></select>
         <span asp-validation-for="Supplier_id" class="text-danger"></span>
     </div>
 

@@ -8,6 +8,13 @@
 <p>
     <a asp-action="CreateWithContents">Create New</a>
 </p>
+<form method="get" action="@Url.Action("ViewDeliveriesWithContentsByDate")">
+    <label for="startDate">Start Date:</label>
+    <input type="date" id="startDate" name="startDate" value="@ViewBag.StartDate" />
+    <label for="endDate">End Date:</label>
+    <input type="date" id="endDate" name="endDate" value="@ViewBag.EndDate" />
+    <button type="submit">Filter</button>
+</form>
 @foreach (var deliveryViewModel in Model)
 {
     
@@ -25,7 +32,6 @@
             <p><strong>Supplier ID:</strong> @deliveryViewModel.Delivery.Supplier_id</p>
             <p><strong>Date:</strong> @deliveryViewModel.Delivery.Date.ToShortDateString()</p>
             <p><strong>Status:</strong> @deliveryViewModel.Delivery.CurrentStatus</p>
-            <p><strong>Total Cost:</strong> @deliveryViewModel.TotalCost.ToString("C")</p>
         </div>
         <div class="card-body">
             <h5>Delivery Contents</h5>
@@ -34,8 +40,7 @@
                     <tr>
                         <th>Product Name</th>
                         <th>Amount</th>
-                        <th>Price Per Unit</th>
-                        <th>Total Price</th>
+                        <th>Editing</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -44,8 +49,6 @@
                         <tr>
                             <td>@content.ProductName</td>
                             <td>@content.Amount</td>
-                            <td>@content.ProductPrice.ToString("C")</td>
-                            <td>@content.TotalPrice.ToString("C")</td>
                             <td>
                                 <a asp-action="Edit" asp-controller="DeliveryContents" asp-route-id="@content.Id" class="btn btn-sm btn-primary">Edit</a>
                                 <a asp-action="Details" asp-controller="DeliveryContents" asp-route-id="@content.Id" class="btn btn-sm btn-info">Details</a>

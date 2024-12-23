@@ -9,6 +9,7 @@ namespace WholesaleBase.Models
         public int Customer_id { get; set; }
         public DateTime Date { get; set; }
         public string CurrentStatus { get; set; }
+        public decimal TotalCost { get; set; } // Новое поле для общей стоимости заказа
 
     }
 }

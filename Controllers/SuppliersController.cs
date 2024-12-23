@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
@@ -19,12 +20,14 @@ namespace WholesaleBase.Controllers
         }
 
         // GET: Suppliers
+        [Authorize(Roles = "Admin,User,Manager")]
         public async Task<IActionResult> Index()
         {
             return View(await _context.Suppliers.ToListAsync());
         }
 
         // GET: Suppliers/Details/5
+        [Authorize(Roles = "Admin,User,Manager")]
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null)
@@ -43,6 +46,7 @@ namespace WholesaleBase.Controllers
         }
 
         // GET: Suppliers/Create
+        [Authorize(Roles = "Admin,User,Manager")]
         public IActionResult Create()
         {
             return View();
@@ -65,6 +69,7 @@ namespace WholesaleBase.Controllers
         }
 
         // GET: Suppliers/Edit/5
+        [Authorize(Roles = "Admin,User,Manager")]
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null)
@@ -116,6 +121,7 @@ namespace WholesaleBase.Controllers
         }
 
         // GET: Suppliers/Delete/5
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null)
