@@ -44,7 +44,7 @@ namespace WholesaleBase.Controllers
         }
 
         // GET: Products/Create
-        [Authorize(Roles = "Admin,User")]
+        [Authorize(Roles = "Admin")]
         public IActionResult Create()
         {
             return View();
@@ -150,6 +150,63 @@ namespace WholesaleBase.Controllers
 
             await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
+        }
+
+
+        // GET: Products/EditPrice/5
+        [Authorize(Roles = "Admin,User,Manager")]
+        public async Task<IActionResult> EditPrice(int? id)
+        {
+            if (id == null)
+            {
+                return NotFound();
+            }
+
+            var product = await _context.Products.FindAsync(id);
+            if (product == null)
+            {
+                return NotFound();
+            }
+            return View(product);
+        }
+
+        // POST: Products/EditPrice/5
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EditPrice(int id, [Bind("Product_id,Name,Amount,Price")] Product product)
+        {
+            if (id != product.Product_id)
+            {
+                return NotFound();
+            }
+
+            if (ModelState.IsValid)
+            {
+                try
+                {
+                    var existingProduct = await _context.Products.FindAsync(id);
+                    if (existingProduct == null)
+                    {
+                        return NotFound();
+                    }
+                    existingProduct.Price = product.Price; // Изменяем только цену
+                    _context.Update(existingProduct);
+                    await _context.SaveChangesAsync();
+                }
+                catch (DbUpdateConcurrencyException)
+                {
+                    if (!ProductExists(product.Product_id))
+                    {
+                        return NotFound();
+                    }
+                    else
+                    {
+                        throw;
+                    }
+                }
+                return RedirectToAction(nameof(Index));
+            }
+            return View(product);
         }
 
         private bool ProductExists(int id)
