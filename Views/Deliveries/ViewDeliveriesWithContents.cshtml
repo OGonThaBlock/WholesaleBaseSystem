@@ -22,12 +22,15 @@
         <div class="card-header">
             <h3>Delivery #@deliveryViewModel.Delivery.Number</h3>
         </div>
-        <div>
-            <a asp-action="ChangeStatus" asp-route-id="@deliveryViewModel.Delivery.Number" class="btn btn-sm btn-warning">Change Status</a>
-            <a asp-action="Edit" asp-route-id="@deliveryViewModel.Delivery.Number">Edit</a> |
-            <a asp-action="Details" asp-route-id="@deliveryViewModel.Delivery.Number">Details</a> |
+        @if (deliveryViewModel.Delivery.CurrentStatus != "Доставлено" || User.Identity.Name == "admin@example.com")
+        {
+            <div>
+                <a asp-action="ChangeStatus" asp-route-id="@deliveryViewModel.Delivery.Number" class="btn btn-sm btn-warning">Change Status</a>
+                <a asp-action="Edit" asp-route-id="@deliveryViewModel.Delivery.Number">Edit</a> |
+                    <a asp-action="Details" asp-route-id="@deliveryViewModel.Delivery.Number">Details</a> |
             <a asp-action="Delete" asp-route-id="@deliveryViewModel.Delivery.Number">Delete</a>
-        </div>
+            </div>
+        }
         <div class="card-body">
             <p><strong>Supplier ID:</strong> @deliveryViewModel.Delivery.Supplier_id</p>
             <p><strong>Date:</strong> @deliveryViewModel.Delivery.Date.ToShortDateString()</p>
@@ -49,12 +52,15 @@
                         <tr>
                             <td>@content.ProductName</td>
                             <td>@content.Amount</td>
-                            <td>
-                                <a asp-action="Edit" asp-controller="DeliveryContents" asp-route-id="@content.Id" class="btn btn-sm btn-primary">Edit</a>
-                                <a asp-action="Details" asp-controller="DeliveryContents" asp-route-id="@content.Id" class="btn btn-sm btn-info">Details</a>
-                                <a asp-action="Delete" asp-controller="DeliveryContents" asp-route-id="@content.Id" class="btn btn-sm btn-danger"
-                                   onclick="return confirm('Are you sure you want to delete this item?');">Delete</a>
-                            </td>
+                            @if (deliveryViewModel.Delivery.CurrentStatus != "Доставлено" || User.Identity.Name == "admin@example.com")
+                            {
+                                <td>
+                                    <a asp-action="Edit" asp-controller="DeliveryContents" asp-route-id="@content.Id" class="btn btn-sm btn-primary">Edit</a>
+                                    <a asp-action="Details" asp-controller="DeliveryContents" asp-route-id="@content.Id" class="btn btn-sm btn-info">Details</a>
+                                    <a asp-action="Delete" asp-controller="DeliveryContents" asp-route-id="@content.Id" class="btn btn-sm btn-danger"
+                                    onclick="return confirm('Are you sure you want to delete this item?');">Delete</a>
+                                </td>
+                            }
                         </tr>
                     }
                 </tbody>

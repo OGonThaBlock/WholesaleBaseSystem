@@ -22,7 +22,7 @@
         <div class="card-header">
             <h3>Order #@orderViewModel.Order.Number</h3>
         </div>
-        @if (orderViewModel.Order.CurrentStatus != "Отгружен")
+        @if (orderViewModel.Order.CurrentStatus != "Отгружен" || User.Identity.Name == "admin@example.com")
         {
             <div>
                 <a asp-action="ChangeStatus" asp-route-id="@orderViewModel.Order.Number" class="btn btn-sm btn-warning">Change Status</a>
@@ -44,7 +44,7 @@
                     <tr>
                         <th>Product Name</th>
                         <th>Amount</th>
-                        @if (orderViewModel.Order.CurrentStatus != "Отгружен")
+                        @if (orderViewModel.Order.CurrentStatus != "Отгружен" || User.Identity.Name == "admin@example.com")
                         {
                             <th>Actions</th>
                         }
@@ -56,7 +56,7 @@
                         <tr>
                             <td>@content.ProductName</td>
                             <td>@content.Amount</td>
-                            @if (orderViewModel.Order.CurrentStatus != "Отгружен")
+                            @if (orderViewModel.Order.CurrentStatus != "Отгружен" || User.Identity.Name == "admin@example.com")
                             {
                                 <td>
                                     <a asp-action="Edit" asp-controller="OrderContents" asp-route-id="@content.Id" class="btn btn-sm btn-primary">Edit</a>

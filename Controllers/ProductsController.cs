@@ -154,7 +154,7 @@ namespace WholesaleBase.Controllers
 
 
         // GET: Products/EditPrice/5
-        [Authorize(Roles = "Admin,User,Manager")]
+        [Authorize(Roles = "Admin,Manager")]
         public async Task<IActionResult> EditPrice(int? id)
         {
             if (id == null)

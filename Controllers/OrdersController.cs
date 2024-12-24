@@ -339,7 +339,7 @@ namespace WholesaleBase.Controllers
 
         //создаём новый заказ с содержанием
         // GET: Orders/CreateWithContents
-        [Authorize(Roles = "Admin,User")]
+        [Authorize(Roles = "Admin,User,Manager")]
         public IActionResult CreateWithContents()
         {
             ViewBag.Products = _context.Products

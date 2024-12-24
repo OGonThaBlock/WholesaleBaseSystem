@@ -301,7 +301,7 @@ namespace WholesaleBase.Controllers
 
         //СОВМЕСТНОЕ ПРЕДСТАВЛЕНИЕ ДЛЯ СОЗДАНИЯ
         // GET: Deliveries/CreateWithContents
-        [Authorize(Roles = "Admin,User")]
+        [Authorize(Roles = "Admin,User,Manager")]
         public IActionResult CreateWithContents()
         {
             ViewBag.Products = _context.Products
