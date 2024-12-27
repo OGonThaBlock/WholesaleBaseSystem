@@ -194,6 +194,9 @@ namespace WholesaleBase.Controllers
 
             // Создаем список моделей
             var orderViewModels = new List<OrderViewModel>();
+            
+            //Модель для расчёта totalCost
+            var orderContentForCalc = new List<OrderContentViewModel>();
 
             foreach (var order in orders)
             {
@@ -218,10 +221,20 @@ namespace WholesaleBase.Controllers
                             ProductName = product.Name,
                             Amount = content.Amount
                         });
+                        //Добавляем в список для расчёта totalCost
+                        orderContentForCalc.Add(new OrderContentViewModel
+                        {
+                            Product_id = content.Product_id,
+                            Amount = content.Amount
+                        });
                     }
                 }
-                
-                
+                //РАСЧЁТ totalCost
+                if (order.CurrentStatus != "Отгружен")
+                {
+                    order.TotalCost = CalculateTotalCost(orderContentForCalc, order.Customer_id);
+                }
+                orderContentForCalc.Clear();
 
                 // Добавляем модель заказа в список
                 orderViewModels.Add(new OrderViewModel
@@ -229,6 +242,7 @@ namespace WholesaleBase.Controllers
                     Order = order,
                     OrderContents = orderContentViewModelPrice
                 });
+
             }
 
             return View(orderViewModels);
@@ -313,6 +327,10 @@ namespace WholesaleBase.Controllers
                     // Обновляем статус и дату заказа
                     existingOrder.CurrentStatus = order.CurrentStatus;
                     existingOrder.Date = DateTime.Now;
+
+
+                    // Обновляем PromoCodes для клиентов
+                    await UpdatePromoCodes();
 
                     _context.Update(existingOrder);
                     await _context.SaveChangesAsync();
@@ -404,9 +422,6 @@ namespace WholesaleBase.Controllers
             await _context.SaveChangesAsync();
 
 
-            // Обновляем PromoCodes для клиентов
-            await UpdatePromoCodes();
-
             return RedirectToAction(nameof(ViewOrdersWithContents));
         }
 
@@ -475,6 +490,9 @@ namespace WholesaleBase.Controllers
 
             var orders = await ordersQuery.ToListAsync();
 
+            //Модель для расчёта totalCost
+            var orderContentForCalc = new List<OrderContentViewModel>();
+
             // Создаем список моделей
             var orderViewModels = new List<OrderViewModel>();
 
@@ -499,9 +517,20 @@ namespace WholesaleBase.Controllers
                             ProductName = product.Name,
                             Amount = content.Amount
                         });
+                        //Добавляем в список для расчёта totalCost
+                        orderContentForCalc.Add(new OrderContentViewModel
+                        {
+                            Product_id = content.Product_id,
+                            Amount = content.Amount
+                        });
                     }
                 }
-
+                //РАСЧЁТ totalCost
+                if (order.CurrentStatus != "Отгружен")
+                {
+                    order.TotalCost = CalculateTotalCost(orderContentForCalc, order.Customer_id);
+                }
+                orderContentForCalc.Clear();
 
                 orderViewModels.Add(new OrderViewModel
                 {
